@@ -15,7 +15,7 @@ All other dependencies, such as Java, are delivered automatically via the Docker
  git clone https://github.com/OpenLMIS/openlmis-diagnostics.git <openlmis-your-service-name>
  ```
 2. Respectively change all instances of `openlmis-diagnostics` and
-`cce` within the project to `openlmis-your-service-name` and
+`diagnostics` within the project to `openlmis-your-service-name` and
 `your-service-name`.
 3. Change all instances of the default version number ("0.0.1") in the project to your
 version number.
