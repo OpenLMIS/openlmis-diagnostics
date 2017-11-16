@@ -2,7 +2,7 @@ version: "2"
 services:
 
   template-service:
-    image: openlmis/template-service
+    image: openlmis/diagnostics
     links:
       - db
       - log
