@@ -82,7 +82,7 @@ flyway {
     url = "$System.env.DATABASE_URL"
     user = "$System.env.POSTGRES_USER"
     password = "$System.env.POSTGRES_PASSWORD"
-    schemas = ['template']
+    schemas = ['diagnostics']
     sqlMigrationPrefix = ''
     placeholderPrefix = '#['
     placeholderSuffix = ']'
@@ -175,7 +175,7 @@ checkstyle {
 //Usage: gradle sonarqube
 sonarqube {
     properties {
-        property "sonar.projectName", "OpenLMIS Template Service"
+        property "sonar.projectName", "OpenLMIS Health & Information Service"
         property "sonar.projectKey", "org.sonarqube:$rootProject.name"
         property "sonar.projectVersion", version
         property "sonar.host.url", "http://sonar.openlmis.org"
