@@ -108,7 +108,7 @@ resourceTypes:
                 type: string
                 required: true
                 repeat: false
-/template:
+/diagnostics:
     displayName: Version
     get:
         description: Get version
