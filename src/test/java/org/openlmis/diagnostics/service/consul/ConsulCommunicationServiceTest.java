@@ -15,20 +15,19 @@
 
 package org.openlmis.diagnostics.service.consul;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.openlmis.diagnostics.service.consul.ConsulSettingsDataBuilder.VALID_SERVICE_TAG;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 public class ConsulCommunicationServiceTest {
   private ConsulSettings consulSettings;
@@ -48,53 +47,45 @@ public class ConsulCommunicationServiceTest {
   @Test
   public void shouldGetHealthStatuses() {
     // given
-    List<String> validServices = Arrays.asList("auth", "requisition");
-    List<String> invalidServices = Collections.singletonList("random-service");
-    ServicesListDto expectedBody = generateServicesList(validServices, invalidServices);
-    mockExternalResponse(expectedBody);
-    mockHealthResponse("auth", new Object());
-    mockHealthResponse("requisition", new Object());
+    ConsulResponse<HealthDetails> expected = new ConsulHealthResponseDataBuilder()
+        .withValidEntity()
+        .build();
+    HealthDetails[] body = expected.getEntities().toArray(new HealthDetails[0]);
+    mockHealthResponse(HealthState.ANY, body);
 
     // when
-    Set<ResponseEntity> statuses = consulCommunicationService.getHealthStatuses();
+    ConsulResponse<HealthDetails> response = consulCommunicationService.getHealthStatuses();
 
     // then
-    assertThat(statuses, hasSize(2));
+    assertThat(response.getEntities(), equalTo(expected.getEntities()));
+    assertThat(response.getStatusCode(), equalTo(expected.getStatusCode()));
   }
 
-  private void mockExternalResponse(ServicesListDto body) {
-    String expectedUrl = consulSettings.getServicesUrl();
+  @Test
+  public void shouldSkipStatusesWithInvalidServiceTags() {
+    // given
+    ConsulResponse<HealthDetails> expected = new ConsulHealthResponseDataBuilder()
+        .withValidEntity()
+        .withInvalidEntity()
+        .build();
+    HealthDetails[] body = expected.getEntities().toArray(new HealthDetails[0]);
+    mockHealthResponse(HealthState.ANY, body);
 
-    ResponseEntity<ServicesListDto> expectedResponse = mock(ResponseEntity.class);
-    given(expectedResponse.getBody()).willReturn(body);
+    // when
+    ConsulResponse<HealthDetails> response = consulCommunicationService.getHealthStatuses();
 
-    given(restTemplate.getForEntity(expectedUrl, ServicesListDto.class))
+    // then
+    assertThat(response.getEntities(), hasSize(1));
+    assertThat(response.getEntities().get(0).getServiceTags(), hasItem(VALID_SERVICE_TAG));
+    assertThat(response.getStatusCode(), equalTo(expected.getStatusCode()));
+  }
+
+  private void mockHealthResponse(HealthState state, HealthDetails[] body) {
+    String expectedUrl = consulSettings.getHealthStateUrl(state);
+    ResponseEntity<HealthDetails[]> expectedResponse = new ResponseEntity<>(body, HttpStatus.OK);
+
+    given(restTemplate.getForEntity(expectedUrl, HealthDetails[].class))
         .willReturn(expectedResponse);
-  }
-
-  private void mockHealthResponse(String service, Object body) {
-    String expectedUrl = consulSettings.getHealthUrl(service);
-
-    ResponseEntity expectedResponse = mock(ResponseEntity.class);
-    given(expectedResponse.getBody()).willReturn(body);
-
-    given(restTemplate.getForEntity(expectedUrl, Object.class))
-        .willReturn(expectedResponse);
-  }
-
-  private ServicesListDto generateServicesList(List<String> valid, List<String> invalid) {
-    ServicesListDto services = new ServicesListDto();
-    String serviceTag = consulSettings.getServiceTag();
-
-    for (String service : valid) {
-      services.put(service, Collections.singletonList(serviceTag));
-    }
-
-    for (String service : invalid) {
-      services.put(service, Collections.emptyList());
-    }
-
-    return services;
   }
 
 }

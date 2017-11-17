@@ -36,25 +36,18 @@ class ConsulSettings {
   @Value("${consul.port}")
   private String port;
 
-  @Value("${consul.services.url}")
-  private String servicesUrl;
-
   @Getter
   @Value("${consul.services.serviceTag}")
   private String serviceTag;
 
-  @Value("${consul.health.url}")
-  private String healthUrl;
+  @Value("${consul.health.state.url}")
+  private String healthStateUrl;
 
-  String getServicesUrl() {
-    return getUrl(servicesUrl);
+  String getHealthStateUrl(HealthState state) {
+    return String.format(
+        "%s://%s:%d%s%s",
+        protocol, host, Integer.valueOf(port), healthStateUrl, state
+    );
   }
 
-  String getHealthUrl(String service) {
-    return getUrl(healthUrl + service);
-  }
-
-  private String getUrl(String path) {
-    return String.format("%s://%s:%d%s", protocol, host, Integer.valueOf(port), path);
-  }
 }

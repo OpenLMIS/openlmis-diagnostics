@@ -21,7 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -42,33 +43,22 @@ public class ConsulCommunicationService {
   /**
    * Retrieves health statuses for all services registered in consul.
    */
-  public Set<ResponseEntity> getHealthStatuses() {
-    return getAvailableServices()
-        .parallelStream()
-        .map(this::getHealthStatus)
-        .collect(Collectors.toSet());
+  public ConsulResponse<HealthDetails> getHealthStatuses() {
+    // The any state is a wildcard that can be used to return all checks. (from consul docs)
+    return getHealthStatus(HealthState.ANY);
   }
 
-  private ResponseEntity getHealthStatus(String service) {
-    return restTemplate.getForEntity(
-        consulSettings.getHealthUrl(service), Object.class
-    );
-  }
+  private ConsulResponse<HealthDetails> getHealthStatus(HealthState state) {
+    String url = consulSettings.getHealthStateUrl(state);
+    Class<HealthDetails[]> type = HealthDetails[].class;
 
-  private Set<String> getAvailableServices() {
-    ResponseEntity<ServicesListDto> response = restTemplate.getForEntity(
-        consulSettings.getServicesUrl(),
-        ServicesListDto.class
-    );
+    ResponseEntity<HealthDetails[]> response = restTemplate.getForEntity(url, type);
+    List<HealthDetails> entities = Arrays
+        .stream(response.getBody())
+        .filter(entity -> entity.hasServiceTag(consulSettings.getServiceTag()))
+        .collect(Collectors.toList());
 
-    ServicesListDto services = response.getBody();
-    String serviceTag = consulSettings.getServiceTag();
-
-    return services
-        .keySet()
-        .stream()
-        .filter(service -> services.isTagged(service, serviceTag))
-        .collect(Collectors.toSet());
+    return new ConsulResponse<>(entities, response.getStatusCode());
   }
 
 }

@@ -16,16 +16,17 @@
 package org.openlmis.diagnostics.service.consul;
 
 class ConsulSettingsDataBuilder {
+  static final String VALID_SERVICE_TAG = "openlmis-service";
+
   private String protocol = "http";
   private String host = "consul";
   private Integer port = 8500;
-  private String servicesUrl = "/v1/catalog/services";
-  private String serviceTag = "openlims-service";
-  private String healthUrl = "/v1/health/service/";
+  private String serviceTag = VALID_SERVICE_TAG;
+  private String healthUrl = "/v1/health/state/";
 
   ConsulSettings build() {
     return new ConsulSettings(
-        protocol, host, port.toString(), servicesUrl, serviceTag, healthUrl
+        protocol, host, port.toString(), serviceTag, healthUrl
     );
   }
 }
