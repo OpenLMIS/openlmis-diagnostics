@@ -7,7 +7,7 @@ scenarios:
   get-system-health-status:
     requests:
       - url: ${__P(base-uri)}/api/health
-        method: POST
+        method: GET
         label: GetSystemHealthStatus
 
 reporting:
