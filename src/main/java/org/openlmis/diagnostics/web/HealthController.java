@@ -16,14 +16,14 @@
 package org.openlmis.diagnostics.web;
 
 import org.openlmis.diagnostics.service.consul.ConsulCommunicationService;
-import org.openlmis.diagnostics.service.consul.ConsulHealthResponse;
 import org.openlmis.diagnostics.service.consul.HealthDetails;
+import org.openlmis.diagnostics.service.consul.SystemHealth;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.util.Set;
 
 @RestController
 public class HealthController {
@@ -32,9 +32,9 @@ public class HealthController {
   private ConsulCommunicationService consulService;
 
   @GetMapping(name = "/api/health")
-  public ResponseEntity<List<HealthDetails>> getHealth() {
-    ConsulHealthResponse response = consulService.getSystemHealth();
-    return ResponseEntity.status(response.getStatusCode()).body(response.getEntities());
+  public ResponseEntity<Set<HealthDetails>> getHealth() {
+    SystemHealth health = consulService.getSystemHealth();
+    return ResponseEntity.status(health.getStatusCode()).body(health.getDetails());
   }
 
 }

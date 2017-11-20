@@ -16,76 +16,93 @@
 package org.openlmis.diagnostics.service.consul;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.openlmis.diagnostics.service.consul.ConsulSettingsDataBuilder.VALID_SERVICE_TAG;
+import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Maps;
+
+import com.ecwid.consul.v1.ConsulClient;
+import com.ecwid.consul.v1.QueryParams;
+import com.ecwid.consul.v1.Response;
+import com.ecwid.consul.v1.health.model.Check;
+import com.ecwid.consul.v1.health.model.HealthService;
+
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Map;
 
 public class ConsulCommunicationServiceTest {
+  private static final String REFERENCEDATA = "referencedata";
+  private static final String REQUISITION = "requisition";
+
   private ConsulSettings consulSettings;
-  private RestTemplate restTemplate;
+  private ConsulClient consulClient;
   private ConsulCommunicationService consulCommunicationService;
 
   @Before
   public void setUp() {
     consulSettings = new ConsulSettingsDataBuilder().build();
-    restTemplate = mock(RestTemplate.class);
+    consulClient = mock(ConsulClient.class);
 
-    consulCommunicationService = new ConsulCommunicationService(
-        restTemplate, consulSettings
-    );
+    consulCommunicationService = new ConsulCommunicationService(consulSettings, consulClient);
   }
 
   @Test
   public void shouldGetHealthStatuses() {
     // given
-    ConsulResponse<HealthDetails> expected = new ConsulHealthResponseDataBuilder()
-        .withPassingEntity()
-        .build();
-    HealthDetails[] body = expected.getEntities().toArray(new HealthDetails[0]);
-    mockHealthResponse(HealthState.ANY, body);
+    Response<Map<String, List<String>>> catalog = generateCatalog();
+    Response<List<HealthService>> healthService = generateHealthService();
+    Response<List<HealthService>> emptyHealthService = generateEmptyHealthService();
 
     // when
-    ConsulResponse<HealthDetails> response = consulCommunicationService.getSystemHealth();
+    when(consulClient.getCatalogServices(QueryParams.DEFAULT))
+        .thenReturn(catalog);
+    when(consulClient.getHealthServices(REFERENCEDATA, false, QueryParams.DEFAULT))
+        .thenReturn(healthService);
+    when(consulClient.getHealthServices(REQUISITION, false, QueryParams.DEFAULT))
+        .thenReturn(emptyHealthService);
+
+    SystemHealth system = consulCommunicationService.getSystemHealth();
 
     // then
-    assertThat(response.getEntities(), equalTo(expected.getEntities()));
-    assertThat(response.getStatusCode(), equalTo(expected.getStatusCode()));
+    assertThat(system.getDetails(), hasSize(1));
+
+    HealthDetails healthDetails = system.getDetails().iterator().next();
+
+    assertThat(healthDetails, hasProperty("serviceName", equalTo(REFERENCEDATA)));
+    assertThat(healthDetails, hasProperty("status", equalTo(HealthState.PASSING)));
   }
 
-  @Test
-  public void shouldSkipStatusesWithInvalidServiceTags() {
-    // given
-    ConsulResponse<HealthDetails> expected = new ConsulHealthResponseDataBuilder()
-        .withPassingEntity()
-        .withInvalidEntity()
-        .build();
-    HealthDetails[] body = expected.getEntities().toArray(new HealthDetails[0]);
-    mockHealthResponse(HealthState.ANY, body);
-
-    // when
-    ConsulResponse<HealthDetails> response = consulCommunicationService.getSystemHealth();
-
-    // then
-    assertThat(response.getEntities(), hasSize(1));
-    assertThat(response.getEntities().get(0).getServiceTags(), hasItem(VALID_SERVICE_TAG));
-    assertThat(response.getStatusCode(), equalTo(expected.getStatusCode()));
+  private Response<List<HealthService>> generateEmptyHealthService() {
+    return new Response<>(Lists.newArrayList(new HealthService()), null, null, null);
   }
 
-  private void mockHealthResponse(HealthState state, HealthDetails[] body) {
-    String expectedUrl = consulSettings.getHealthStateUrl(state);
-    ResponseEntity<HealthDetails[]> expectedResponse = new ResponseEntity<>(body, HttpStatus.OK);
+  private Response<List<HealthService>> generateHealthService() {
+    Check check = new Check();
+    check.setServiceName(REFERENCEDATA);
+    check.setStatus(Check.CheckStatus.PASSING);
 
-    given(restTemplate.getForEntity(expectedUrl, HealthDetails[].class))
-        .willReturn(expectedResponse);
+    HealthService healthService = new HealthService();
+    healthService.setChecks(Lists.newArrayList(check));
+
+    List<HealthService> healthServices = Lists.newArrayList(healthService);
+
+    return new Response<>(healthServices, null, null, null);
+  }
+
+  private Response<Map<String, List<String>>> generateCatalog() {
+    Map<String, List<String>> map = Maps.newHashMap();
+    map.put(REFERENCEDATA, Lists.newArrayList(consulSettings.getServiceTag()));
+    map.put(REQUISITION, Lists.newArrayList(consulSettings.getServiceTag()));
+    map.put("random-service", Lists.newArrayList());
+
+    return new Response<>(map, null, null, null);
   }
 
 }

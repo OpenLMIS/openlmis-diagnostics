@@ -42,6 +42,7 @@ dependencies {
     compile 'org.openlmis:openlmis-service-util:3.0.0'
     compile 'org.webjars:swagger-ui:2.2.6'
     compile 'org.springframework:spring-aspects:4.3.12.RELEASE'
+    compile "com.ecwid.consul:consul-api:1.3.0"
 
     testCompile "com.github.tomakehurst:wiremock:1.58"
     testCompile "com.jayway.restassured:rest-assured:2.7.0"

@@ -22,32 +22,19 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @Component
 @NoArgsConstructor
 @AllArgsConstructor
 class ConsulSettings {
 
-  @Value("${consul.protocol}")
-  private String protocol;
-
   @Value("${consul.host}")
   private String host;
 
   @Value("${consul.port}")
-  private String port;
+  private int port;
 
-  @Getter
-  @Value("${consul.services.serviceTag}")
+  @Value("${consul.serviceTag}")
   private String serviceTag;
-
-  @Value("${consul.health.state.url}")
-  private String healthStateUrl;
-
-  String getHealthStateUrl(HealthState state) {
-    return String.format(
-        "%s://%s:%d%s%s",
-        protocol, host, Integer.valueOf(port), healthStateUrl, state
-    );
-  }
 
 }

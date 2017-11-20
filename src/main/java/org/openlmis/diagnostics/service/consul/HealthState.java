@@ -15,26 +15,14 @@
 
 package org.openlmis.diagnostics.service.consul;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import org.springframework.http.HttpStatus;
 
 import lombok.Getter;
 
-import java.util.Locale;
-
 public enum HealthState {
-
-  @JsonProperty("any")
-  ANY(null),
-
-  @JsonProperty("passing")
+  UNKNOWN(null),
   PASSING(HttpStatus.OK),
-
-  @JsonProperty("warning")
   WARNING(HttpStatus.TOO_MANY_REQUESTS),
-
-  @JsonProperty("critical")
   CRITICAL(HttpStatus.SERVICE_UNAVAILABLE);
 
   @Getter
@@ -44,8 +32,4 @@ public enum HealthState {
     this.httpStatus = httpStatus;
   }
 
-  @Override
-  public String toString() {
-    return name().toLowerCase(Locale.ENGLISH);
-  }
 }

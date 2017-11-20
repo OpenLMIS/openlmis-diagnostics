@@ -21,38 +21,33 @@ import static org.openlmis.diagnostics.service.consul.HealthState.WARNING;
 
 import org.springframework.http.HttpStatus;
 
-import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-public class ConsulHealthResponse extends ConsulResponse<HealthDetails> {
+import java.util.Set;
 
-  ConsulHealthResponse(List<HealthDetails> entities, HttpStatus statusCode) {
-    super(entities, statusCode);
-  }
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+public class SystemHealth {
+
+  @Getter
+  private Set<HealthDetails> details;
 
   /**
-   * Returns status code of consul health response. If response contains HTTP status different than
-   * 200, it will be immediately return it. Otherwise the return value depends on {@link
-   * HealthDetails#status} field. If any entity has {@link HealthState#WARNING}, the 429 HTTP status
-   * will be returned. If any entity has {@link HealthState#CRITICAL}, the 503 HTTP status will be
-   * returned. If all entities has {@link HealthState#PASSING}, the 200 HTTP code will be returned.
+   * Returns http status. The status code depends on {@link HealthDetails#status} field. If any
+   * entity has WARNING status, the 429 HTTP status will be returned. If any entity has CRITICAL
+   * status, the 503 HTTP status will be returned. If all entities has PASSING status, the 200 HTTP
+   * code will be returned.
    */
-  @Override
   public HttpStatus getStatusCode() {
-    HttpStatus code = super.getStatusCode();
-
-    if (HttpStatus.OK != code) {
-      return code;
-    }
-
-    if (getEntities().stream().anyMatch(HealthDetails::hasCriticalStatus)) {
+    if (details.stream().anyMatch(HealthDetails::hasCriticalStatus)) {
       return CRITICAL.getHttpStatus();
     }
 
-    if (getEntities().stream().anyMatch(HealthDetails::hasWarningStatus)) {
+    if (details.stream().anyMatch(HealthDetails::hasWarningStatus)) {
       return WARNING.getHttpStatus();
     }
 
     return PASSING.getHttpStatus();
   }
-
 }

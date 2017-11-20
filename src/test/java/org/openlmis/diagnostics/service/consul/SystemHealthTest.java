@@ -21,31 +21,19 @@ import static org.junit.Assert.assertThat;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 
-public class ConsulHealthResponseTest {
-
-  @Test
-  public void shouldReturnOriginalStatusIfItIsDifferentThan200() throws Exception {
-    ConsulHealthResponse response = new ConsulHealthResponseDataBuilder()
-        .withInternalServerErrorStatus()
-        .withPassingEntity()
-        .withWarningEntity()
-        .withCriticalEntity()
-        .build();
-
-    assertThat(response.getStatusCode(), equalTo(HttpStatus.INTERNAL_SERVER_ERROR));
-  }
+public class SystemHealthTest {
 
   @Test
   public void shouldReturnOkStatusIfAllEntitiesHasPassingStatus() {
     assertThat(
-        new ConsulHealthResponseDataBuilder().withPassingEntity().build().getStatusCode(),
+        new SystemHealthDataBuilder().withPassingEntity().build().getStatusCode(),
         equalTo(HttpStatus.OK)
     );
   }
 
   @Test
   public void shouldReturnTooManyRequestsStatusIfSingleEntityHasWarningStatus() {
-    ConsulHealthResponse response = new ConsulHealthResponseDataBuilder()
+    SystemHealth response = new SystemHealthDataBuilder()
         .withPassingEntity()
         .withWarningEntity()
         .build();
@@ -55,7 +43,7 @@ public class ConsulHealthResponseTest {
 
   @Test
   public void shouldReturnServiceUnavailableStatusIfSingleEntityHasCriticalStatus() {
-    ConsulHealthResponse response = new ConsulHealthResponseDataBuilder()
+    SystemHealth response = new SystemHealthDataBuilder()
         .withPassingEntity()
         .withWarningEntity()
         .withCriticalEntity()

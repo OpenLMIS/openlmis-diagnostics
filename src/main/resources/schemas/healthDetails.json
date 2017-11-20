@@ -35,13 +35,6 @@
     "serviceName": {
       "type": "string",
       "title": "serviceName"
-    },
-    "serviceTags": {
-      "type": "array",
-      "title": "serviceTags",
-      "items": {
-        "type": "string"
-      }
     }
   },
   "required": [
@@ -50,7 +43,6 @@
     "name",
     "status",
     "serviceId",
-    "serviceName",
-    "serviceTags"
+    "serviceName"
   ]
 }

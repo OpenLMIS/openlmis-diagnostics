@@ -15,50 +15,80 @@
 
 package org.openlmis.diagnostics.service.consul;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestOperations;
-import org.springframework.web.client.RestTemplate;
+import com.ecwid.consul.v1.ConsulClient;
+import com.ecwid.consul.v1.QueryParams;
+import com.ecwid.consul.v1.health.model.Check;
+import com.ecwid.consul.v1.health.model.HealthService;
 
-import java.util.Arrays;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class ConsulCommunicationService {
-  private RestOperations restTemplate;
   private ConsulSettings consulSettings;
+  private ConsulClient client;
 
   @Autowired
-  public ConsulCommunicationService(ConsulSettings consulSettings) {
-    this(new RestTemplate(), consulSettings);
+  ConsulCommunicationService(ConsulSettings consulSettings) {
+    this(consulSettings, new ConsulClient(consulSettings.getHost(), consulSettings.getPort()));
   }
 
-  ConsulCommunicationService(RestOperations restTemplate, ConsulSettings consulSettings) {
-    this.restTemplate = restTemplate;
+  public ConsulCommunicationService(ConsulSettings consulSettings, ConsulClient client) {
     this.consulSettings = consulSettings;
+    this.client = client;
   }
 
   /**
    * Retrieves health statuses for all services registered in consul.
    */
-  public ConsulHealthResponse getSystemHealth() {
-    // The any state is a wildcard that can be used to return all checks. (from consul docs)
-    return getHealthStatus(HealthState.ANY);
+  public SystemHealth getSystemHealth() {
+    Set<HealthDetails> details = getAvailableServices()
+        .parallelStream()
+        .map(this::getHealthStatus)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(HealthDetails::new)
+        .collect(Collectors.toSet());
+
+    return new SystemHealth(details);
   }
 
-  private ConsulHealthResponse getHealthStatus(HealthState state) {
-    String url = consulSettings.getHealthStateUrl(state);
-    Class<HealthDetails[]> type = HealthDetails[].class;
+  private Optional<Check> getHealthStatus(String service) {
+    List<HealthService> healthService = client
+        .getHealthServices(service, false, QueryParams.DEFAULT)
+        .getValue();
 
-    ResponseEntity<HealthDetails[]> response = restTemplate.getForEntity(url, type);
-    List<HealthDetails> entities = Arrays
-        .stream(response.getBody())
-        .filter(entity -> entity.hasServiceTag(consulSettings.getServiceTag()))
-        .collect(Collectors.toList());
+    if (null == healthService || healthService.isEmpty()) {
+      return Optional.empty();
+    }
 
-    return new ConsulHealthResponse(entities, response.getStatusCode());
+    List<Check> checks = healthService.get(0).getChecks();
+
+    if (null == checks || checks.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return checks
+        .stream()
+        .filter(check -> service.equalsIgnoreCase(check.getServiceName()))
+        .findFirst();
+  }
+
+  private Set<String> getAvailableServices() {
+    Map<String, List<String>> catalog = client.getCatalogServices(QueryParams.DEFAULT).getValue();
+    String serviceTag = consulSettings.getServiceTag();
+
+    return catalog
+        .keySet()
+        .stream()
+        .filter(service -> catalog.get(service).contains(serviceTag))
+        .collect(Collectors.toSet());
   }
 
 }

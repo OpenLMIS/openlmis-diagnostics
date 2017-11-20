@@ -24,8 +24,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import org.junit.Test;
 import org.openlmis.diagnostics.service.consul.ConsulCommunicationService;
-import org.openlmis.diagnostics.service.consul.ConsulHealthResponseDataBuilder;
 import org.openlmis.diagnostics.service.consul.HealthState;
+import org.openlmis.diagnostics.service.consul.SystemHealthDataBuilder;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import guru.nidi.ramltester.junit.RamlMatchers;
@@ -41,7 +41,7 @@ public class HealthControllerIntegrationTest extends BaseWebIntegrationTest {
   @Test
   public void shouldReturnHealthDetailsWithOkStatus() throws IOException {
     given(consulService.getSystemHealth())
-        .willReturn(new ConsulHealthResponseDataBuilder().withPassingEntity().build());
+        .willReturn(new SystemHealthDataBuilder().withPassingEntity().build());
 
     sendHealthRequest(HealthState.PASSING);
   }
@@ -49,7 +49,7 @@ public class HealthControllerIntegrationTest extends BaseWebIntegrationTest {
   @Test
   public void shouldReturnHealthDetailsWithTooManyRequestsStatus() throws IOException {
     given(consulService.getSystemHealth())
-        .willReturn(new ConsulHealthResponseDataBuilder().withWarningEntity().build());
+        .willReturn(new SystemHealthDataBuilder().withWarningEntity().build());
 
     sendHealthRequest(HealthState.WARNING);
   }
@@ -57,7 +57,7 @@ public class HealthControllerIntegrationTest extends BaseWebIntegrationTest {
   @Test
   public void shouldReturnHealthDetailsWithServiceUnavailableStatus() throws IOException {
     given(consulService.getSystemHealth())
-        .willReturn(new ConsulHealthResponseDataBuilder().withCriticalEntity().build());
+        .willReturn(new SystemHealthDataBuilder().withCriticalEntity().build());
 
     sendHealthRequest(HealthState.CRITICAL);
   }
@@ -78,7 +78,7 @@ public class HealthControllerIntegrationTest extends BaseWebIntegrationTest {
 
     assertThat(array.isArray(), is(true));
     assertThat(array.size(), is(1));
-    assertThat(array.get(0).get("status").asText(), equalTo(healthStatus.toString()));
+    assertThat(array.get(0).get("status").asText(), equalTo(healthStatus.name()));
   }
 
 }

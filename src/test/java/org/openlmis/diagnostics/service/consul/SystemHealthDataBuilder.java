@@ -15,5 +15,35 @@
 
 package org.openlmis.diagnostics.service.consul;
 
-public interface ConsulEntity {
+import org.assertj.core.util.Sets;
+
+import java.util.Set;
+
+public class SystemHealthDataBuilder {
+  private Set<HealthDetails> entities = Sets.newHashSet();
+
+  public SystemHealthDataBuilder withPassingEntity() {
+    entities.add(new HealthDetailsDataBuilder().build());
+    return this;
+  }
+
+  public SystemHealthDataBuilder withWarningEntity() {
+    entities.add(new HealthDetailsDataBuilder().withWarningStatus().build());
+    return this;
+  }
+
+  public SystemHealthDataBuilder withCriticalEntity() {
+    entities.add(new HealthDetailsDataBuilder().withCriticalStatus().build());
+    return this;
+  }
+
+  public SystemHealthDataBuilder withInvalidEntity() {
+    entities.add(new HealthDetailsDataBuilder().build());
+    return this;
+  }
+
+  public SystemHealth build() {
+    return new SystemHealth(entities);
+  }
+
 }
