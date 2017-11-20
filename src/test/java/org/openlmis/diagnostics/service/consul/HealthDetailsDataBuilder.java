@@ -17,6 +17,7 @@ package org.openlmis.diagnostics.service.consul;
 
 import static org.openlmis.diagnostics.service.consul.ConsulSettingsDataBuilder.VALID_SERVICE_TAG;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.util.Lists;
 
 import java.util.List;
@@ -37,9 +38,38 @@ class HealthDetailsDataBuilder {
     return this;
   }
 
+  HealthDetailsDataBuilder withWarningStatus() {
+    status = HealthState.WARNING;
+    return this;
+  }
+
+  HealthDetailsDataBuilder withCriticalStatus() {
+    status = HealthState.CRITICAL;
+    return this;
+  }
+
+  HealthDetailsDataBuilder withRandomNotes() {
+    notes = RandomStringUtils.randomAlphabetic(10);
+    return this;
+  }
+
+  HealthDetailsDataBuilder withRandomOutput() {
+    output = RandomStringUtils.randomAlphabetic(10);
+    return this;
+  }
+
   HealthDetails build() {
-    return new HealthDetails(
-        node, checkId, name, status, notes, output, serviceId, serviceName, serviceTags
-    );
+    HealthDetails details = new HealthDetails();
+    details.setNode(node);
+    details.setCheckId(checkId);
+    details.setName(name);
+    details.setStatus(status);
+    details.setNotes(notes);
+    details.setOutput(output);
+    details.setServiceId(serviceId);
+    details.setServiceName(serviceName);
+    details.setServiceTags(serviceTags);
+
+    return details;
   }
 }

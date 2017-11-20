@@ -25,7 +25,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
-public class ConsulResponse<T extends ConsulEntity> {
+public abstract class ConsulResponse<T extends ConsulEntity> {
   private final List<T> entities;
   private final HttpStatus statusCode;
 }

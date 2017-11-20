@@ -43,12 +43,12 @@ public class ConsulCommunicationService {
   /**
    * Retrieves health statuses for all services registered in consul.
    */
-  public ConsulResponse<HealthDetails> getHealthStatuses() {
+  public ConsulHealthResponse getSystemHealth() {
     // The any state is a wildcard that can be used to return all checks. (from consul docs)
     return getHealthStatus(HealthState.ANY);
   }
 
-  private ConsulResponse<HealthDetails> getHealthStatus(HealthState state) {
+  private ConsulHealthResponse getHealthStatus(HealthState state) {
     String url = consulSettings.getHealthStateUrl(state);
     Class<HealthDetails[]> type = HealthDetails[].class;
 
@@ -58,7 +58,7 @@ public class ConsulCommunicationService {
         .filter(entity -> entity.hasServiceTag(consulSettings.getServiceTag()))
         .collect(Collectors.toList());
 
-    return new ConsulResponse<>(entities, response.getStatusCode());
+    return new ConsulHealthResponse(entities, response.getStatusCode());
   }
 
 }

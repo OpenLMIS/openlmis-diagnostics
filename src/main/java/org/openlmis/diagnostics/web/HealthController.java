@@ -13,23 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org. 
  */
 
-package org.openlmis.diagnostics.service.consul;
+package org.openlmis.diagnostics.web;
 
-import org.assertj.core.util.Lists;
-import org.springframework.http.HttpStatus;
+import org.openlmis.diagnostics.service.consul.ConsulCommunicationService;
+import org.openlmis.diagnostics.service.consul.ConsulHealthResponse;
+import org.openlmis.diagnostics.service.consul.HealthDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-abstract class ConsulResponseDataBuilder<T extends ConsulEntity> {
-  private List<T> entities = Lists.newArrayList();
-  private HttpStatus statusCode = HttpStatus.OK;
+@RestController
+public class HealthController {
 
-  void addEntity(T entity) {
-    entities.add(entity);
-  }
+  @Autowired
+  private ConsulCommunicationService consulService;
 
-  ConsulResponse<T> build() {
-    return new ConsulResponse<T>(entities, statusCode);
+  @GetMapping(name = "/api/health")
+  public ResponseEntity<List<HealthDetails>> getHealth() {
+    ConsulHealthResponse response = consulService.getSystemHealth();
+    return ResponseEntity.status(response.getStatusCode()).body(response.getEntities());
   }
 
 }

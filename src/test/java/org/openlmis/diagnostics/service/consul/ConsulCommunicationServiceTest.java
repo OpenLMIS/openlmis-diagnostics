@@ -48,13 +48,13 @@ public class ConsulCommunicationServiceTest {
   public void shouldGetHealthStatuses() {
     // given
     ConsulResponse<HealthDetails> expected = new ConsulHealthResponseDataBuilder()
-        .withValidEntity()
+        .withPassingEntity()
         .build();
     HealthDetails[] body = expected.getEntities().toArray(new HealthDetails[0]);
     mockHealthResponse(HealthState.ANY, body);
 
     // when
-    ConsulResponse<HealthDetails> response = consulCommunicationService.getHealthStatuses();
+    ConsulResponse<HealthDetails> response = consulCommunicationService.getSystemHealth();
 
     // then
     assertThat(response.getEntities(), equalTo(expected.getEntities()));
@@ -65,14 +65,14 @@ public class ConsulCommunicationServiceTest {
   public void shouldSkipStatusesWithInvalidServiceTags() {
     // given
     ConsulResponse<HealthDetails> expected = new ConsulHealthResponseDataBuilder()
-        .withValidEntity()
+        .withPassingEntity()
         .withInvalidEntity()
         .build();
     HealthDetails[] body = expected.getEntities().toArray(new HealthDetails[0]);
     mockHealthResponse(HealthState.ANY, body);
 
     // when
-    ConsulResponse<HealthDetails> response = consulCommunicationService.getHealthStatuses();
+    ConsulResponse<HealthDetails> response = consulCommunicationService.getSystemHealth();
 
     // then
     assertThat(response.getEntities(), hasSize(1));

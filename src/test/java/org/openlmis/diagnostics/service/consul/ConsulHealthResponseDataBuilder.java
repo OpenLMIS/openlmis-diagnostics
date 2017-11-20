@@ -15,15 +15,42 @@
 
 package org.openlmis.diagnostics.service.consul;
 
-class ConsulHealthResponseDataBuilder extends ConsulResponseDataBuilder<HealthDetails> {
+import org.assertj.core.util.Lists;
+import org.springframework.http.HttpStatus;
 
-  ConsulHealthResponseDataBuilder withValidEntity() {
-    addEntity(new HealthDetailsDataBuilder().withValidServiceTag().build());
+import java.util.List;
+
+public class ConsulHealthResponseDataBuilder {
+  private List<HealthDetails> entities = Lists.newArrayList();
+  private HttpStatus httpStatus = HttpStatus.OK;
+
+  public ConsulHealthResponseDataBuilder withPassingEntity() {
+    entities.add(new HealthDetailsDataBuilder().withValidServiceTag().build());
     return this;
   }
 
-  ConsulHealthResponseDataBuilder withInvalidEntity() {
-    addEntity(new HealthDetailsDataBuilder().build());
+  public ConsulHealthResponseDataBuilder withWarningEntity() {
+    entities.add(new HealthDetailsDataBuilder().withValidServiceTag().withWarningStatus().build());
     return this;
   }
+
+  public ConsulHealthResponseDataBuilder withCriticalEntity() {
+    entities.add(new HealthDetailsDataBuilder().withValidServiceTag().withCriticalStatus().build());
+    return this;
+  }
+
+  public ConsulHealthResponseDataBuilder withInvalidEntity() {
+    entities.add(new HealthDetailsDataBuilder().build());
+    return this;
+  }
+
+  public ConsulHealthResponseDataBuilder withInternalServerErrorStatus() {
+    httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+    return this;
+  }
+
+  public ConsulHealthResponse build() {
+    return new ConsulHealthResponse(entities, httpStatus);
+  }
+
 }

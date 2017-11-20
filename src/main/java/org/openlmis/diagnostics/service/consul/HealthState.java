@@ -17,17 +17,32 @@ package org.openlmis.diagnostics.service.consul;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.springframework.http.HttpStatus;
+
+import lombok.Getter;
+
 import java.util.Locale;
 
 public enum HealthState {
+
   @JsonProperty("any")
-  ANY,
+  ANY(null),
+
   @JsonProperty("passing")
-  PASSING,
+  PASSING(HttpStatus.OK),
+
   @JsonProperty("warning")
-  WARNING,
+  WARNING(HttpStatus.TOO_MANY_REQUESTS),
+
   @JsonProperty("critical")
-  CRITICAL;
+  CRITICAL(HttpStatus.SERVICE_UNAVAILABLE);
+
+  @Getter
+  HttpStatus httpStatus;
+
+  HealthState(HttpStatus httpStatus) {
+    this.httpStatus = httpStatus;
+  }
 
   @Override
   public String toString() {

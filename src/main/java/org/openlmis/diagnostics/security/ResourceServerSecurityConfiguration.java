@@ -89,7 +89,8 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
             "/diagnostics",
             "/webjars/**",
             "/diagnostics/webjars/**",
-            "/diagnostics/docs/**"
+            "/diagnostics/docs/**",
+            "/api/health"
         ).permitAll()
         .antMatchers("/**").fullyAuthenticated();
   }

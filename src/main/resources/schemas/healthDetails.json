@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Version",
+  "description": "Service version and build information",
+  "properties": {
+    "node": {
+      "type": "string",
+      "title": "node"
+    },
+    "checkId": {
+      "type": "string",
+      "title": "checkId"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "status": {
+      "type": "string",
+      "title": "status"
+    },
+    "notes": {
+      "type": "string",
+      "title": "notes"
+    },
+    "output": {
+      "type": "string",
+      "title": "output"
+    },
+    "serviceId": {
+      "type": "string",
+      "title": "serviceId"
+    },
+    "serviceName": {
+      "type": "string",
+      "title": "serviceName"
+    },
+    "serviceTags": {
+      "type": "array",
+      "title": "serviceTags",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "node",
+    "checkId",
+    "name",
+    "status",
+    "serviceId",
+    "serviceName",
+    "serviceTags"
+  ]
+}

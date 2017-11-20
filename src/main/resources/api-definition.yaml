@@ -1,54 +1,51 @@
 #%RAML 0.8
 ---
-title: OpenLMIS Template API
+title: OpenLMIS Health & Information API
 version: "@version@"
 baseUri: "http://localhost:8080"
 
 documentation:
-    - title: Getting Started
-      content: Welcome to the OpenLMIS diagnostics documentation. This minimal API is intended for illustrative purposes.
+  - title: Getting Started
+    content: Welcome to the OpenLMIS diagnostics documentation.
 
 schemas:
-
-  - version: |
-      {   "$schema": "http://json-schema.org/draft-03/schema",
-          "description": "Service version and build information",
-          "type": "object",
-          "properties": {
-              "service": { "type": "string", "required": true},
-              "build": { "type": "string", "required": true},
-              "branch": { "type": "string", "required": true},
-              "timeStamp": { "type": "string", "required": true},
-              "version": { "type": "string", "required": true}
-          }
+  - version: !include schemas/version.json
+  - healthDetails: !include schemas/healthDetails.json
+  - healthDetailsArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/healthDetails.json" }
       }
 
-traits:
-    - secured:
-          queryParameters:
-              access_token:
-                  displayName: access_token
-                  description: OAuth2 access token
-                  type: string
-                  required: false
-                  repeat: false
-          headers:
-              Authorization:
-                  displayName: Authorization
-                  description: OAuth2 authorization token header. Takes the form of 'Bearer <token>'.
-                  type: string
-                  required: false
-                  repeat: false
 /diagnostics:
-    displayName: Version
+  displayName: Version
+  get:
+    description: Get version
+    responses:
+      200:
+        description: Returns version information.
+        body:
+          application/json:
+            schema: version
+/api:
+  /health:
+    displayName: System Health Status
     get:
-        description: Get version
-        responses:
-          200:
-            description: Returns version information.
-            headers:
-              X-Content-Type-Options:
-              X-XSS-Protection:
-            body:
-              application/json:
-                schema: version
+      description: >
+        Return current system health status. Response code depends on health status of
+        services. The 200 HTTP code means that system works fine, the 429 HTTP code means
+        that some services are heavily burdened and the 503 HTTP code means that some
+        service have critical issues.
+      responses:
+        200:
+          body:
+            application/json:
+              schema: healthDetailsArray
+        429:
+          body:
+            application/json:
+              schema: healthDetailsArray
+        503:
+          body:
+            application/json:
+              schema: healthDetailsArray
