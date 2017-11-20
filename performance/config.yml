@@ -1,0 +1,11 @@
+modules:
+  jmeter:
+    properties:
+      base-uri: http://localhost
+    xml-jtl-flags:
+      responseData: true
+reporting:
+  - module: final-stats
+  - module: passfail
+    criteria:
+    - failures>0%, stop as failed

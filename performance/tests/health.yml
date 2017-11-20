@@ -1,0 +1,16 @@
+execution:
+  - concurreny: 1
+    hold-for: 2m30s
+    scenario: get-system-health-status
+
+scenarios:
+  get-system-health-status:
+    requests:
+      - url: ${__P(base-uri)}/api/health
+        method: POST
+        label: GetSystemHealthStatus
+
+reporting:
+    - module: passfail
+      criteria:
+        Get System Health Status too slow: p90 of GetSystemHealthStatus>100ms
