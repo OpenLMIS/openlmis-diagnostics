@@ -15,6 +15,8 @@
 
 package org.openlmis.diagnostics.service.consul;
 
+import static org.springframework.util.CollectionUtils.isEmpty;
+
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.QueryParams;
 import com.ecwid.consul.v1.health.model.Check;
@@ -64,13 +66,13 @@ public class ConsulCommunicationService {
         .getHealthServices(service, false, QueryParams.DEFAULT)
         .getValue();
 
-    if (null == healthService || healthService.isEmpty()) {
+    if (isEmpty(healthService)) {
       return Optional.empty();
     }
 
     List<Check> checks = healthService.get(0).getChecks();
 
-    if (null == checks || checks.isEmpty()) {
+    if (isEmpty(checks)) {
       return Optional.empty();
     }
 
