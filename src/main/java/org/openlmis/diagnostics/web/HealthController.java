@@ -31,7 +31,7 @@ public class HealthController {
   @Autowired
   private ConsulCommunicationService consulService;
 
-  @GetMapping(name = "/api/health")
+  @GetMapping(value = "/api/health")
   public ResponseEntity<Set<HealthDetails>> getHealth() {
     SystemHealth health = consulService.getSystemHealth();
     return ResponseEntity.status(health.getStatusCode()).body(health.getDetails());
