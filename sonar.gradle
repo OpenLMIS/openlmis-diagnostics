@@ -23,7 +23,7 @@ def retrieveQualityGate(fileName) {
 
     def response = new URL(url).text
 
-    def dir = new File("build/sonar/")
+    def dir = new File("build/sonar-qg/")
     dir.mkdirs()
 
     def file = new File(dir, fileName + ".json")
