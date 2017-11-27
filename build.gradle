@@ -139,66 +139,7 @@ checkstyle {
     toolVersion = "7.1"
 }
 
-//Usage: gradle sonarqube
-sonarqube {
-    properties {
-        property "sonar.projectName", "OpenLMIS Health & Information Service"
-        property "sonar.projectKey", "org.sonarqube:$rootProject.name"
-        property "sonar.projectVersion", version
-        property "sonar.host.url", "http://sonar.openlmis.org"
-        property "sonar.java.coveragePlugin", "jacoco"
-        //Tells SonarQube where the unit tests execution reports are
-        property "sonar.junit.reportsPath", "build/test-results/test"
-        //Tells SonarQube where the unit tests code coverage report is
-        property "sonar.jacoco.reportPath", "build/jacoco/test.exec"
-        //Tells SonarQube where the integration tests code coverage report is
-        property "sonar.jacoco.itReportPath", "build/jacoco/integrationTest.exec"
-        properties["sonar.tests"] += sourceSets.integrationTest.java
-    }
-}
-
-task qualityGate << {
-    def reportTask = new Properties()
-    file("build/sonar/report-task.txt").withInputStream { reportTask.load(it) }
-
-    def response
-    def json = new Object()
-    def status = ""
-
-    for (def i = 0; i < 50; ++i) {
-        response = new URL(reportTask["ceTaskUrl"]).text
-        json = new groovy.json.JsonSlurper().parse(response)
-
-        status = json.task.status
-
-        if (status == "SUCCESS") {
-            break
-        } else {
-            println "Waiting for SUCCESS status. Retrieved:  " + status
-            sleep(1000)
-        }
-    }
-
-    if (status != "SUCCESS") {
-        throw new GradleException("Task status is " + status)
-    }
-
-    def url = reportTask["serverUrl"] \
-        + "/api/qualitygates/project_status?analysisId=" \
-        + json.task.analysisId
-
-    response = new URL(url).text
-    json = new groovy.json.JsonSlurper().parse(response)
-
-    if (json.projectStatus.status == "ERROR") {
-        throw new GradleException("Quality Gate FAILED")
-    }
-
-    println "Quality Gate PASSED"
-}
-
-project.tasks["sonarqube"].dependsOn integrationTest
-project.tasks["qualityGate"].dependsOn "sonarqube"
+apply from: "sonar.gradle"
 
 pmd {
     toolVersion = '5.4.0'

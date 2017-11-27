@@ -23,7 +23,8 @@ services:
       - 'gradle'
     command:
       - 'clean'
-      - 'qualityGate'
+      - 'getQualityGate'
+      - 'checkQualityGate'
     environment:
       GRADLE_OPTS: '-Dorg.gradle.daemon=false $SONAR_LOGIN $SONAR_PASSWORD'
     env_file: .env
