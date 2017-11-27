@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    id "org.sonarqube" version "2.5"
+    id "org.sonarqube" version "2.6.1"
     id "com.moowork.node" version "1.2.0"
 }
 
@@ -157,7 +157,48 @@ sonarqube {
     }
 }
 
+task qualityGate << {
+    def reportTask = new Properties()
+    file("build/sonar/report-task.txt").withInputStream { reportTask.load(it) }
+
+    def response
+    def json = new Object()
+    def status = ""
+
+    for (def i = 0; i < 50; ++i) {
+        response = new URL(reportTask["ceTaskUrl"]).text
+        json = new groovy.json.JsonSlurper().parse(response)
+
+        status = json.task.status
+
+        if (status == "SUCCESS") {
+            break
+        } else {
+            println "Waiting for SUCCESS status. Retrieved:  " + status
+            sleep(1000)
+        }
+    }
+
+    if (status != "SUCCESS") {
+        throw new GradleException("Task status is " + status)
+    }
+
+    def url = reportTask["serverUrl"] \
+        + "/api/qualitygates/project_status?analysisId=" \
+        + json.task.analysisId
+
+    response = new URL(url).text
+    json = new groovy.json.JsonSlurper().parse(response)
+
+    if (json.projectStatus.status == "ERROR") {
+        throw new GradleException("Quality Gate FAILED")
+    }
+
+    println "Quality Gate PASSED"
+}
+
 project.tasks["sonarqube"].dependsOn integrationTest
+project.tasks["qualityGate"].dependsOn "sonarqube"
 
 pmd {
     toolVersion = '5.4.0'
