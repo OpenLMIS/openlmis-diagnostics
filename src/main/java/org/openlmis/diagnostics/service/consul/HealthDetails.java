@@ -21,24 +21,24 @@ import static org.openlmis.diagnostics.service.consul.HealthState.WARNING;
 import com.ecwid.consul.v1.health.model.Check;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @EqualsAndHashCode
-@NoArgsConstructor
-public class HealthDetails {
-  private String node;
-  private String checkId;
-  private String name;
-  private HealthState status;
-  private String notes;
-  private String output;
-  private String serviceId;
-  private String serviceName;
+@AllArgsConstructor
+public final class HealthDetails {
+  private final String node;
+  private final String checkId;
+  private final String name;
+  private final HealthState status;
+  private final String notes;
+  private final String output;
+  private final String serviceId;
+  private final String serviceName;
 
   HealthDetails(Check check) {
     node = check.getNode();

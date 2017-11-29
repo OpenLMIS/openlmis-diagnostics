@@ -48,16 +48,6 @@ class HealthDetailsDataBuilder {
   }
 
   HealthDetails build() {
-    HealthDetails details = new HealthDetails();
-    details.setNode(node);
-    details.setCheckId(checkId);
-    details.setName(name);
-    details.setStatus(status);
-    details.setNotes(notes);
-    details.setOutput(output);
-    details.setServiceId(serviceId);
-    details.setServiceName(serviceName);
-
-    return details;
+    return new HealthDetails(node, checkId, name, status, notes, output, serviceId, serviceName);
   }
 }

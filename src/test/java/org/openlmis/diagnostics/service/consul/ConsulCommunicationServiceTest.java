@@ -18,55 +18,94 @@ package org.openlmis.diagnostics.service.consul;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import com.google.common.collect.Maps;
+import static org.openlmis.diagnostics.service.consul.ConsulHelper.REFERENCEDATA;
+import static org.openlmis.diagnostics.service.consul.ConsulHelper.generateCatalog;
+import static org.openlmis.diagnostics.service.consul.ConsulHelper.generateEmptyHealthService;
+import static org.openlmis.diagnostics.service.consul.ConsulHelper.generateEmptyHealthServiceResponse;
 
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.QueryParams;
 import com.ecwid.consul.v1.Response;
-import com.ecwid.consul.v1.health.model.Check;
 import com.ecwid.consul.v1.health.model.HealthService;
 
-import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
 
 public class ConsulCommunicationServiceTest {
-  private static final String REFERENCEDATA = "referencedata";
-  private static final String REQUISITION = "requisition";
-
   private ConsulSettings consulSettings;
   private ConsulClient consulClient;
   private ConsulCommunicationService consulCommunicationService;
 
   @Before
   public void setUp() {
+    // given
     consulSettings = new ConsulSettingsDataBuilder().build();
-    consulClient = mock(ConsulClient.class);
 
-    consulCommunicationService = new ConsulCommunicationService(consulSettings, consulClient);
+    consulClient = mock(ConsulClient.class);
+    given(consulClient.getCatalogServices(QueryParams.DEFAULT))
+        .willReturn(generateCatalog(consulSettings.getServiceTag()));
+
+    consulCommunicationService = new ConsulCommunicationService();
+    consulCommunicationService.setConsulSettings(consulSettings);
+    consulCommunicationService.setClient(consulClient);
+    consulCommunicationService.afterPropertiesSet();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionIfConsulSettingsIsNull() throws Exception {
+    testAfterPropertiesSet(null);
+  }
+
+  @Test
+  public void shouldSetConsulClient() throws Exception {
+    testAfterPropertiesSet(consulSettings);
+  }
+
+  @Test
+  public void shouldReturnEmptyListIfConsulResponseIsEmpty() throws Exception {
+    testEmptySystemHealth(generateEmptyHealthServiceResponse());
+  }
+
+  @Test
+  public void shouldReturnEmptyListIfThereIsNoChecks() throws Exception {
+    testEmptySystemHealth(generateEmptyHealthService());
   }
 
   @Test
   public void shouldGetHealthStatuses() {
-    // given
-    Response<Map<String, List<String>>> catalog = generateCatalog();
-    Response<List<HealthService>> healthService = generateHealthService();
-    Response<List<HealthService>> emptyHealthService = generateEmptyHealthService();
+    testSystemHealth(ConsulHelper.generateHealthService());
+  }
 
+  private void testAfterPropertiesSet(ConsulSettings consulSettings) {
+    consulCommunicationService.setConsulSettings(consulSettings);
+    consulCommunicationService.setClient(null);
+    consulCommunicationService.afterPropertiesSet();
+
+    // we only check if field is set we don't use value to take any additional actions
+    Field field = ReflectionUtils.findField(ConsulCommunicationService.class, "client");
+    field.setAccessible(true);
+
+    Object client = ReflectionUtils.getField(field, consulCommunicationService);
+
+    assertThat(client, is(notNullValue()));
+    assertThat(client, is(instanceOf(ConsulClient.class)));
+    assertThat(client, is(not(consulClient)));
+  }
+
+  private void testSystemHealth(Response<List<HealthService>> response) {
     // when
-    when(consulClient.getCatalogServices(QueryParams.DEFAULT))
-        .thenReturn(catalog);
-    when(consulClient.getHealthServices(REFERENCEDATA, false, QueryParams.DEFAULT))
-        .thenReturn(healthService);
-    when(consulClient.getHealthServices(REQUISITION, false, QueryParams.DEFAULT))
-        .thenReturn(emptyHealthService);
+    mockConsulHealthServices(response);
 
     SystemHealth system = consulCommunicationService.getSystemHealth();
 
@@ -79,30 +118,19 @@ public class ConsulCommunicationServiceTest {
     assertThat(healthDetails, hasProperty("status", equalTo(HealthState.PASSING)));
   }
 
-  private Response<List<HealthService>> generateEmptyHealthService() {
-    return new Response<>(Lists.newArrayList(new HealthService()), null, null, null);
+  private void testEmptySystemHealth(Response<List<HealthService>> response) {
+    // when
+    mockConsulHealthServices(response);
+
+    SystemHealth system = consulCommunicationService.getSystemHealth();
+
+    // then
+    assertThat(system.getDetails(), hasSize(0));
   }
 
-  private Response<List<HealthService>> generateHealthService() {
-    Check check = new Check();
-    check.setServiceName(REFERENCEDATA);
-    check.setStatus(Check.CheckStatus.PASSING);
-
-    HealthService healthService = new HealthService();
-    healthService.setChecks(Lists.newArrayList(check));
-
-    List<HealthService> healthServices = Lists.newArrayList(healthService);
-
-    return new Response<>(healthServices, null, null, null);
-  }
-
-  private Response<Map<String, List<String>>> generateCatalog() {
-    Map<String, List<String>> map = Maps.newHashMap();
-    map.put(REFERENCEDATA, Lists.newArrayList(consulSettings.getServiceTag()));
-    map.put(REQUISITION, Lists.newArrayList(consulSettings.getServiceTag()));
-    map.put("random-service", Lists.newArrayList());
-
-    return new Response<>(map, null, null, null);
+  private void mockConsulHealthServices(Response<List<HealthService>> response) {
+    given(consulClient.getHealthServices(REFERENCEDATA, false, QueryParams.DEFAULT))
+        .willReturn(response);
   }
 
 }

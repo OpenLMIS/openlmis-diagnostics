@@ -22,6 +22,7 @@ import com.ecwid.consul.v1.QueryParams;
 import com.ecwid.consul.v1.health.model.Check;
 import com.ecwid.consul.v1.health.model.HealthService;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,18 +33,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class ConsulCommunicationService {
+public class ConsulCommunicationService implements InitializingBean {
   private ConsulSettings consulSettings;
   private ConsulClient client;
 
-  @Autowired
-  ConsulCommunicationService(ConsulSettings consulSettings) {
-    this(consulSettings, new ConsulClient(consulSettings.getHost(), consulSettings.getPort()));
-  }
+  @Override
+  public void afterPropertiesSet() {
+    if (null == consulSettings) {
+      throw new IllegalStateException("Consul settings must be set");
+    }
 
-  public ConsulCommunicationService(ConsulSettings consulSettings, ConsulClient client) {
-    this.consulSettings = consulSettings;
-    this.client = client;
+    if (null == client) {
+      client = new ConsulClient(consulSettings.getHost(), consulSettings.getPort());
+    }
   }
 
   /**
@@ -59,6 +61,15 @@ public class ConsulCommunicationService {
         .collect(Collectors.toSet());
 
     return new SystemHealth(details);
+  }
+
+  @Autowired
+  public void setConsulSettings(ConsulSettings consulSettings) {
+    this.consulSettings = consulSettings;
+  }
+
+  public void setClient(ConsulClient client) {
+    this.client = client;
   }
 
   private Optional<Check> getHealthStatus(String service) {
