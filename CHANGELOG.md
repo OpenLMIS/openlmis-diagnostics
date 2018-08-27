@@ -1,3 +1,9 @@
+1.0.2 / WIP
+==================
+
+Improvements:
+* [OLMIS-4295](https://openlmis.atlassian.net/browse/OLMIS-4295): Updated checkstyle to use newest google style.
+
 1.0.1 / 2018-08-16
 ==================
 
