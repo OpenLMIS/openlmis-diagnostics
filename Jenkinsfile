@@ -39,7 +39,7 @@ pipeline {
                     }
                     VERSION = properties.serviceVersion
                     STAGING_VERSION = properties.serviceVersion
-                    if (CURRENT_BRANCH != 'master' || (CURRENT_BRANCH == 'master' && !VERSION.endsWith("SNAPSHOT"))) {
+                    if (env.GIT_BRANCH != 'master' || (env.GIT_BRANCH == 'master' && !VERSION.endsWith("SNAPSHOT"))) {
                         STAGING_VERSION += "-STAGING"
                     }
                     currentBuild.displayName += " - " + VERSION
