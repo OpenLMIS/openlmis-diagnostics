@@ -11,6 +11,7 @@ pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: '15'))
         disableConcurrentBuilds()
+        skipStagesAfterUnstable()
     }
     environment {
         PATH = "/usr/local/bin/:$PATH"
@@ -56,25 +57,37 @@ pipeline {
         stage('Build') {
             steps {
                 withCredentials([file(credentialsId: '8da5ba56-8ebb-4a6a-bdb5-43c9d0efb120', variable: 'ENV_FILE')]) {
-                    sh 'set +x'
-                    sh 'sudo rm -f .env'
-                    sh 'cp $ENV_FILE .env'
-                    sh '''
-                        if [ "$GIT_BRANCH" != "master" ]; then
-                            sed -i '' -e "s#^TRANSIFEX_PUSH=.*#TRANSIFEX_PUSH=false#" .env  2>/dev/null || true
-                        fi
-                    '''
+                    script {
+                        try {
+                            sh 'set +x'
+                            sh 'sudo rm -f .env'
+                            sh 'cp $ENV_FILE .env'
+                            sh '''
+                                if [ "$GIT_BRANCH" != "master" ]; then
+                                    sed -i '' -e "s#^TRANSIFEX_PUSH=.*#TRANSIFEX_PUSH=false#" .env  2>/dev/null || true
+                                fi
+                            '''
 
-                    sh 'docker-compose -f docker-compose.builder.yml run -e BUILD_NUMBER=$BUILD_NUMBER -e GIT_BRANCH=$GIT_BRANCH builder'
-                    sh 'docker-compose -f docker-compose.builder.yml build image'
-                    sh 'docker-compose -f docker-compose.builder.yml down --volumes'
-                    sh "docker tag openlmis/diagnostics:latest openlmis/diagnostics:${STAGING_VERSION}"
-                    sh "docker push openlmis/diagnostics:${STAGING_VERSION}"
+                            sh 'docker-compose -f docker-compose.builder.yml run -e BUILD_NUMBER=$BUILD_NUMBER -e GIT_BRANCH=$GIT_BRANCH builder'
+                            sh 'docker-compose -f docker-compose.builder.yml build image'
+                            sh 'docker-compose -f docker-compose.builder.yml down --volumes'
+                            sh "docker tag openlmis/diagnostics:latest openlmis/diagnostics:${STAGING_VERSION}"
+                            sh "docker push openlmis/diagnostics:${STAGING_VERSION}"
+                        }
+                        catch (exc) {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
                 }
             }
             post {
                 success {
                     archive 'build/libs/*.jar,build/resources/main/api-definition.html, build/resources/main/  version.properties'
+                }
+                unstable {
+                    script {
+                        notifyAfterFailure()
+                    }
                 }
                 failure {
                     script {
@@ -111,29 +124,36 @@ pipeline {
                     steps {
                         withSonarQubeEnv('Sonar OpenLMIS') {
                             withCredentials([string(credentialsId: 'SONAR_LOGIN', variable: 'SONAR_LOGIN'), string(credentialsId: 'SONAR_PASSWORD', variable: 'SONAR_PASSWORD')]) {
-                                sh '''
-                                    set +x
-                                    sudo rm -f .env
+                                script {
+                                    try {
+                                        sh '''
+                                            set +x
+                                            sudo rm -f .env
 
-                                    curl -o .env -L https://raw.githubusercontent.com/OpenLMIS/openlmis-ref-distro/master/settings-sample.env
+                                            curl -o .env -L https://raw.githubusercontent.com/OpenLMIS/openlmis-ref-distro/master/settings-sample.env
 
-                                    sed -i '' -e "s#spring_profiles_active=.*#spring_profiles_active=#" .env  2>/dev/null || true
-                                    sed -i '' -e "s#^BASE_URL=.*#BASE_URL=http://localhost#" .env  2>/dev/null || true
-                                    sed -i '' -e "s#^VIRTUAL_HOST=.*#VIRTUAL_HOST=localhost#" .env  2>/dev/null || true
+                                            sed -i '' -e "s#spring_profiles_active=.*#spring_profiles_active=#" .env  2>/dev/null || true
+                                            sed -i '' -e "s#^BASE_URL=.*#BASE_URL=http://localhost#" .env  2>/dev/null || true
+                                            sed -i '' -e "s#^VIRTUAL_HOST=.*#VIRTUAL_HOST=localhost#" .env  2>/dev/null || true
 
-                                    SONAR_LOGIN_TEMP=$(echo $SONAR_LOGIN | cut -f2 -d=)
-                                    SONAR_PASSWORD_TEMP=$(echo $SONAR_PASSWORD | cut -f2 -d=)
-                                    echo "SONAR_LOGIN=$SONAR_LOGIN_TEMP" >> .env
-                                    echo "SONAR_PASSWORD=$SONAR_PASSWORD_TEMP" >> .env
-                                    echo "SONAR_BRANCH=$GIT_BRANCH" >> .env
+                                            SONAR_LOGIN_TEMP=$(echo $SONAR_LOGIN | cut -f2 -d=)
+                                            SONAR_PASSWORD_TEMP=$(echo $SONAR_PASSWORD | cut -f2 -d=)
+                                            echo "SONAR_LOGIN=$SONAR_LOGIN_TEMP" >> .env
+                                            echo "SONAR_PASSWORD=$SONAR_PASSWORD_TEMP" >> .env
+                                            echo "SONAR_BRANCH=$GIT_BRANCH" >> .env
 
-                                    docker-compose -f docker-compose.builder.yml run sonar
-                                    docker-compose -f docker-compose.builder.yml down --volumes
+                                            docker-compose -f docker-compose.builder.yml run sonar
+                                            docker-compose -f docker-compose.builder.yml down --volumes
 
-                                    sudo rm -vrf .env
-                                '''
-                                // workaround: Sonar plugin retrieves the path directly from the output
-                                sh 'echo "Working dir: ${WORKSPACE}/build/sonar"'
+                                            sudo rm -vrf .env
+                                        '''
+                                        // workaround: Sonar plugin retrieves the path directly from the output
+                                        sh 'echo "Working dir: ${WORKSPACE}/build/sonar"'
+                                    }
+                                    catch (exc) {
+                                        currentBuild.result = 'UNSTABLE'
+                                    }
+                                }
                             }
                         }
                         timeout(time: 1, unit: 'HOURS') {
@@ -146,6 +166,11 @@ pipeline {
                         }
                     }
                     post {
+                        unstable {
+                            script {
+                                notifyAfterFailure()
+                            }
+                        }
                         failure {
                             script {
                                 notifyAfterFailure()
@@ -213,9 +238,9 @@ pipeline {
 def notifyAfterFailure() {
     BRANCH = "${BRANCH_NAME}"
     if (BRANCH.equals("master") || BRANCH.startsWith("rel-")) {
-        slackSend color: 'danger', message: "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${env.STAGE_NAME} FAILED (<${env.BUILD_URL}|Open>)"
+        slackSend color: 'danger', message: "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${env.STAGE_NAME} ${currentBuild.result} (<${env.BUILD_URL}|Open>)"
     }
-    emailext subject: "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${env.STAGE_NAME} FAILED",
-        body: """<p>${env.JOB_NAME} - #${env.BUILD_NUMBER} ${env.STAGE_NAME} FAILED</p><p>Check console <a href="${env.BUILD_URL}">output</a> to view the results.</p>""",
+    emailext subject: "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${env.STAGE_NAME} ${currentBuild.result}",
+        body: """<p>${env.JOB_NAME} - #${env.BUILD_NUMBER} ${env.STAGE_NAME} ${currentBuild.result}</p><p>Check console <a href="${env.BUILD_URL}">output</a> to view the results.</p>""",
         recipientProviders: [[$class: 'CulpritsRecipientProvider'], [$class: 'DevelopersRecipientProvider']]
 }
