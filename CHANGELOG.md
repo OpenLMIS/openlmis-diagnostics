@@ -3,6 +3,7 @@
 
 Improvements:
 * [OLMIS-4531](https://openlmis.atlassian.net/browse/OLMIS-4531): Added compressing HTTP POST responses.
+* [OLMIS-6129](https://openlmis.atlassian.net/browse/OLMIS-6129): Added package-lock.json file.
 
 1.0.2 / 2018-12-12
 ==================
