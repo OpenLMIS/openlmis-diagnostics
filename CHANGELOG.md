@@ -1,3 +1,14 @@
+1.1.0 / WIP
+=================
+New functionality added in a backwards-compatible manner:
+* [OLMIS-6771](https://openlmis.atlassian.net/browse/OLMIS-6771): Update Spring Boot version to 2.x:
+  * Spring Boot version is 2.2.2.
+  * New mechanism for loading Spring Security for OAuth2 (matching Spring Boot version), new versions for RAML tester, RAML parser.
+  * Fix repository method signatures (findOne is now findById, etc.); additionally they return Optional.
+  * Fix unit tests.
+  * Fix integration tests.
+  * API definitions require "Keep-Alive" header for web integration tests.
+
 1.0.3 / 2019-05-27
 ==================
 

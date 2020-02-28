@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:2.2.2.RELEASE"
     }
 }
 
@@ -14,7 +14,8 @@ plugins {
 
 apply plugin: 'java'
 apply plugin: 'idea'
-apply plugin: 'spring-boot'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
 apply plugin: 'pmd'
@@ -33,25 +34,26 @@ repositories {
 }
 
 dependencies {
-    compile "org.projectlombok:lombok:1.16.8"
+    compile "org.projectlombok:lombok"
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-rest"
-    compile "org.springframework.security.oauth:spring-security-oauth2"
+    compile "org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:2.2.2.RELEASE"
     compile 'com.google.guava:guava:23.3-jre'
-    compile 'org.apache.commons:commons-lang3:3.5'
+    compile 'org.apache.commons:commons-lang3'
     compile 'org.openlmis:openlmis-service-util:3.0.0'
     compile 'org.webjars.npm:api-console:3.0.17'
-    compile 'org.springframework:spring-aspects:4.3.12.RELEASE'
+    compile 'org.springframework:spring-aspects'
     compile "com.ecwid.consul:consul-api:1.3.0"
 
     testCompile "com.github.tomakehurst:wiremock:1.58"
     testCompile "com.jayway.restassured:rest-assured:2.7.0"
-    testCompile "guru.nidi.raml:raml-tester:0.8.9"
+    testCompile "guru.nidi.raml:raml-tester:0.8.15"
+    testCompile "org.raml:raml-parser:0.8.37"
     testCompile "junit:junit"
     testCompile "org.springframework.boot:spring-boot-starter-test"
-    testCompile 'io.rest-assured:json-schema-validator:3.0.0'
-    testCompile 'io.rest-assured:rest-assured:3.0.0'
-    testCompile 'io.rest-assured:spring-mock-mvc:3.0.0'
+    testCompile 'io.rest-assured:json-schema-validator'
+    testCompile 'io.rest-assured:rest-assured'
+    testCompile 'io.rest-assured:spring-mock-mvc'
     testCompile 'nl.jqno.equalsverifier:equalsverifier:2.4'
 }
 
@@ -78,6 +80,10 @@ idea {
             }
         }*/
     }
+    module {
+        sourceDirs -= file('src/integration-test/java')
+        testSourceDirs += file('src/integration-test/java')
+    }
 }
 
 sourceSets {
@@ -97,7 +103,7 @@ configurations {
 }
 
 task integrationTest(type: Test) {
-    testClassesDir = sourceSets.integrationTest.output.classesDir
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     testLogging {
         events "passed", "skipped", "failed"

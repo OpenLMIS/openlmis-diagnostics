@@ -39,10 +39,14 @@ schemas:
         service have critical issues.
       responses:
         200:
+          headers:
+            Keep-Alive:
           body:
             application/json:
               schema: healthDetailsArray
         429:
+          headers:
+            Keep-Alive:
           body:
             application/json:
               schema: healthDetailsArray
