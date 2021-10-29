@@ -1,3 +1,8 @@
+1.1.1 / 2021-10-29
+==================
+Improvement:
+* [OLMIS-6983](https://openlmis.atlassian.net/browse/OLMIS-6983): Sonar analysis and contract tests runs only for snapshots
+
 1.1.0 / 2020-04-14
 ==================
 New functionality added in a backwards-compatible manner:
