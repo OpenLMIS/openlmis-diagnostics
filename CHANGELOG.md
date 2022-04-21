@@ -1,4 +1,4 @@
-1.1.2 / WIP
+1.1.2 / 2022-04-21
 ==================
 Improvement:
 * [OLMIS-7568](https://openlmis.atlassian.net/browse/OLMIS-7568): Use openlmis/dev:7 and openlmis/service-base:6.1
