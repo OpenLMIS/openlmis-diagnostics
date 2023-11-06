@@ -34,7 +34,7 @@ repositories {
 }
 
 dependencies {
-    compile "org.projectlombok:lombok"
+    compile 'org.projectlombok:lombok:1.18.22'
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-rest"
     compile "org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:2.2.2.RELEASE"
