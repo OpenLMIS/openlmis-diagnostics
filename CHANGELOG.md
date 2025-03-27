@@ -1,24 +1,29 @@
-1.1.4 / wip
+1.1.4 / 2025-03-31
 ==================
+
+Minor coverage updates and code analysis improvements.
 
 1.1.3 / 2024-10-31
 ==================
+
 Improvement:
 * [OIS-48](https://openlmis.atlassian.net/browse/OIS-48): Update service base images to versions without known vulnerabilities
 
 1.1.2 / 2022-04-21
 ==================
+
 Improvement:
 * [OLMIS-7568](https://openlmis.atlassian.net/browse/OLMIS-7568): Use openlmis/dev:7 and openlmis/service-base:6.1
 
-
 1.1.1 / 2021-10-29
 ==================
+
 Improvement:
 * [OLMIS-6983](https://openlmis.atlassian.net/browse/OLMIS-6983): Sonar analysis and contract tests runs only for snapshots
 
 1.1.0 / 2020-04-14
 ==================
+
 New functionality added in a backwards-compatible manner:
 * [OLMIS-6771](https://openlmis.atlassian.net/browse/OLMIS-6771): Update Spring Boot version to 2.x:
   * Spring Boot version is 2.2.2.
