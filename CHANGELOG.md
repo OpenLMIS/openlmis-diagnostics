@@ -4,6 +4,10 @@ Upcoming Version (WIP)
 Improvements:
 * Stabilized consul registration and health checks
 
+Bug fixes:
+* [OLMIS-8223](https://openlmis.atlassian.net/browse/OLMIS-8223): Fix placeholder bug in messages
+
+
 1.1.4 / 2025-03-31
 ==================
 
