@@ -8,7 +8,6 @@ buildscript {
 }
 
 plugins {
-    id "org.sonarqube" version "3.3"
     id "com.moowork.node" version "1.2.0"
 }
 
@@ -151,17 +150,6 @@ checkstyle {
     toolVersion = "8.12"
 }
 
-//NOTE: This plugin requires that this task be named 'sonarqube'. In fact, it is performing SonarCloud analysis.
-sonarqube {
-    properties {
-        property "sonar.projectKey", "OpenLMIS_openlmis-diagnostics"
-        property "sonar.organization", "openlmis"
-        property "sonar.host.url", "https://sonarcloud.io"
-        property "sonar.java.source", "17"
-        property "sonar.coverage.jacoco.xmlReportPaths", "./report.xml"
-    }
-}
-
 pmd {
     toolVersion = '5.4.0'
     consoleOutput= true
@@ -176,7 +164,6 @@ tasks.withType(Pmd){
         html.enabled true
     }
 }
-
 
 test {
     testLogging {
